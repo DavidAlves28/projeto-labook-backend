@@ -22,4 +22,21 @@ export class PostController {
         }
     }
   };
+  public createPost = async (req: Request , res : Response)=>{
+    try {
+      
+      
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("errors");
+
+      res.status(400).send(error);
+    }
+      else if (error instanceof Error) {
+        res.status(404).send(error.message);
+      } else {
+        res.status(500).send("Erro inesperado");
+      }
+  }
+  }
 }

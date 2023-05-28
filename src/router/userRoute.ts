@@ -5,5 +5,5 @@ import { PostDataBase } from "../database/PostDataBase";
 
 export const postRoute = express.Router();
 
-const postController = new  PostController( new PostBusiness ( new PostDataBase))
-postRoute.get('/',postController.findAllPosts)
+const postController = new PostController(new PostBusiness(new PostDataBase()));
+postRoute.get("/", postController.findAllPosts);
