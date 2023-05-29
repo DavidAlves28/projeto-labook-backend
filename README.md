@@ -40,8 +40,8 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
     - [ ]  tokens JWT
  
  - Código
-    - [ ]  POO
-    - [ ]  Arquitetura em camadas
+    - [ x]  POO
+    - [ x]  Arquitetura em camadas
     - [ ]  Roteadores no Express
 
 - README.md
