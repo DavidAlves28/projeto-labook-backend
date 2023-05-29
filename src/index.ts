@@ -1,7 +1,8 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
-import { postRoute} from "./router/userRoute";
+import { postRoute} from "./router/postRoute";
 import dotenv from 'dotenv'
+import { userRoute } from "./router/userRoute";
 
 dotenv.config()
 
@@ -15,3 +16,4 @@ app.listen(Number(process.env.PORT) || 3003,()=>{console.log(`Servidor rodando n
 
 })
 app.use('/posts', postRoute)
+app.use('/users', userRoute)

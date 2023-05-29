@@ -1,7 +1,8 @@
 import { BaseError } from "./BaseError";
 
-export class NotFundError extends BaseError{
-    constructor(){
-        super(404, "id  não existe")
+export class NotFoundError extends BaseError{
+    constructor(message: string,){
+        
+        super(404, message)
     }
 }

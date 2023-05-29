@@ -1,9 +1,15 @@
 import express from "express";
-import { PostController } from "../controller/PostController";
-import { PostBusiness } from "../business/PostBusiness";
-import { PostDataBase } from "../database/PostDataBase";
+import { UserController } from "../controller/UserController";
+import { UserBusiness } from "../business/UserBusiness";
+import { UserDataBase } from "../database/UserDataBase";
+import { IdGenerator } from "../services/IdGenerator";
+import { TokenManager } from "../services/TokenManager";
 
-export const postRoute = express.Router();
+export const userRoute = express.Router();
+const userController = new UserController(
+  new UserBusiness(new UserDataBase(), new IdGenerator(), new TokenManager())
+);
 
-const postController = new  PostController( new PostBusiness ( new PostDataBase))
-postRoute.get('/',postController.findAllPosts)
+userRoute.get("/",userController.getUsers);
+userRoute.post("/signup", userController.signup);
+userRoute.post("/login", userController.login);

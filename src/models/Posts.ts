@@ -1,3 +1,26 @@
+export interface PostDB {
+  id: string,
+  content: string,
+  created_at: string
+  updated_at : string,
+  likes: number,
+  dislikes: number,
+  creator_id : string
+
+}
+
+// é o modelo de Post que o front receberá (createdAt camelCase)
+export interface PostModel {
+  id: string,
+  content: string,
+  createdAt: string,
+  updatedAt:string
+  likes: number,
+  dislikes: number,
+  creatorId : string
+}
+
+
 export class Posts {
   constructor(
     private id: string,
@@ -57,13 +80,28 @@ export class Posts {
   public setCreatedAt(value: string): void {
     this.createdAt = value;
   }
-}
-export interface PostDB {
-  id: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  likes: number;
-  dislikes: number;
-  creatorId: string;
+
+  // para facilitar o retorno, geramos um PostDB
+  public toDBModel(): PostDB {
+    return {
+     id :this.id,
+     content  : this.content,
+     created_at: this.createdAt,
+     updated_at : this.updatedAt,
+     likes: this.likes,
+     dislikes: this.dislikes,
+     creator_id: this.creatorId,
+    }
+  }
+  public toBusinessModel():PostModel{
+  return{
+    id: this.id,
+    content: this.content,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+    likes: this.likes,
+    dislikes: this.dislikes,
+    creatorId : this.creatorId
+  }
+  }
 }

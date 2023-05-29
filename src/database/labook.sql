@@ -32,7 +32,7 @@ CREATE TABLE
         updated_at TEXT NOT NULL  DEFAULT(DATETIME('now', 'localtime')),
         likes INTEGER DEFAULT(0) NOT NULL,
         dislikes INTEGER DEFAULT(0) NOT NULL,
-        creator_id TEXT UNIQUE NOT NULL,
+        creator_id TEXT  NOT NULL,
         FOREIGN KEY (creator_id) REFERENCES users(id)
     );
 
