@@ -10,12 +10,18 @@ import { SignupInputDTO, SignupOutputDTO } from "../dtos/users/signup.dto";
 import { BadRequestError } from "../errors/BadRequestError";
 import { LoginInputDTO, LoginOutputDTO } from "../dtos/users/login.dto";
 import { NotFoundError } from "../errors/NotFoundError";
+import { HashManager } from "../services/HashManager";
+import { LikesDislikesDataBase } from "../database/LikeDislikesDataBase";
+import { LikesDislikes } from "../models/LikesDislikes";
+import { LikesDislikesInputDTO, LikesDislikesOutputDTO } from "../dtos/likesDislikes/likes-dislikes.dto";
 
 export class UserBusiness {
   constructor(
     private userDatabase: UserDataBase,
     private idgenerator: IdGenerator,
-    private tokenManager: TokenManager
+    private tokenManager: TokenManager,
+    private hashManager: HashManager,
+    private likeDataBase: LikesDislikesDataBase
   ) {}
 
   // endpoint que retorna todos os users
@@ -23,8 +29,15 @@ export class UserBusiness {
   public getUsers = async (
     input: GetUsersInputDTO
   ): Promise<GetUsersOutputDTO> => {
-    const { q } = input;
+    const { q, token } = input;
+    const payload = await this.tokenManager.getPayload(token);
 
+    if (payload === null) {
+      throw new NotFoundError("Token invalido");
+    }
+    if (payload.role !== USER_ROLES.ADMIN) {
+      throw new BadRequestError("Acesso restrito, somente Administratores.");
+    }
     const usersDB = await this.userDatabase.findUsers(q);
 
     const users = usersDB.map((userDB) => {
@@ -51,30 +64,25 @@ export class UserBusiness {
 
     // id  gerado pelo UUID
     const id = this.idgenerator.generate();
+    const hashPassword = await this.hashManager.hash(password);
 
     // verifica se o id criado ja existe
     const userDBExists = await this.userDatabase.findUserById(id);
     if (userDBExists) {
       throw new BadRequestError("'id' já existe");
     }
-    
-    // verifica se existe o mesmo nome
-    const nameExist = await this.userDatabase.findUsers(name)
-    if (nameExist) {
-        throw new BadRequestError("'name' já existe");
-      }
     // verificar se o email já existe
     const emailExist = await this.userDatabase.findUserByEmail(email);
     if (emailExist) {
-        throw new BadRequestError("'email' já existe");
+      throw new BadRequestError("'email' já existe");
     }
     // criar  na instância de user (novo user)
     const newUser = new User(
       id,
       name,
       email,
-      password,
-      USER_ROLES.NORMAL, // só é possível criar users com contas normais.
+      hashPassword,
+      USER_ROLES.ADMIN, // só é possível criar users com contas normais.
       new Date().toISOString() // createdAt.
     );
 
@@ -111,16 +119,30 @@ export class UserBusiness {
     if (!userDB) {
       throw new NotFoundError("'email' não encontrado");
     }
-    // se passowrd informado for diferente do password do DB, retornar erro.
-    if (password !== userDB.password) {
-      throw new BadRequestError("'email' ou 'password' incorretos");
+    // comparar password com banco de dados.
+    const passwordCompare = await this.hashManager.compare(
+      password,
+      userDB.password
+    );
+
+    // se password informado for diferente do Hashpassword do DB, retornar erro.
+    if (!passwordCompare) {
+      throw new BadRequestError("email' ou 'password' incorretos");
     }
+    const user = new User(
+      userDB.id,
+      userDB.name,
+      userDB.email,
+      userDB.password,
+      userDB.role,
+      userDB.created_at
+    );
 
     // criar tokenPayload do user depois de insirido do banco de dados.
     const tokenPayload: TokenPayload = {
-      id: userDB.id,
-      name: userDB.name,
-      role: userDB.role,
+      id: user.getId(),
+      name: user.getName(),
+      role: user.getRole(),
     };
 
     // criar token do user logado
@@ -134,4 +156,43 @@ export class UserBusiness {
 
     return output;
   };
+
+  // public getUsersWithPost = async (
+  //   input: GetUsersInputDTO
+  // ): Promise<LikesDislikesOutputDTO> => {
+  //   const { q, token } = input;
+  //   const payload = await this.tokenManager.getPayload(token);
+
+  //   if (payload === null) {
+  //     throw new NotFoundError("Token invalido");
+  //   }
+  //   if (payload.role !== USER_ROLES.ADMIN) {
+  //     throw new BadRequestError("Acesso restrito, somente Administratores.");
+  //   }
+  //   const usersDB = await this.userDatabase.findUsers(q);
+
+  //   const users = usersDB.map((userDB) => {
+  //     const user = new User(
+  //       userDB.id,
+  //       userDB.name,
+  //       userDB.email,
+  //       userDB.password,
+  //       userDB.role,
+  //       userDB.created_at
+  //     );
+
+  //     return user.toBusinessModel();
+  //   });
+
+  //   // // criar objeto.
+  //   // const tableRelation : LikesDislikesOutputDTO = await this.likeDataBase.findUserId(payload.id);
+  
+  //   // console.log(tableRelation);
+    
+  //   // se houver token, então retornar seu id do token.
+
+  //   const output: GetUsersOutputDTO = users;
+
+   
+  // };
 }

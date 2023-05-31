@@ -4,27 +4,33 @@ import { BaseError } from "../errors/BaseError";
 import { CreatePostSchema } from "../dtos/posts/createPost.dto";
 import { GetPostSchema } from "../dtos/posts/getPosts.dto";
 import { DeletePostSchema } from "../dtos/posts/deletePost.dto";
-
+import { UpdaterPostSchema } from "../dtos/posts/updatePost.dto";
+import { ZodError } from "zod";
 
 export class PostController {
   // Injeção de dependência postBusiness
   constructor(private postBusiness: PostBusiness) {}
 
-  // retorna todos os Posts 
+  // retorna todos os Posts
   public findAllPosts = async (req: Request, res: Response) => {
     try {
+      // receber dados do Front-end
       const input = GetPostSchema.parse({
-        q: req.query.q
-      })
+        q: req.query.q,
+      });
+
+      // enviar para Businnes para verificações
       const output = await this.postBusiness.findAllPosts(input);
+
+      // resposta para Front-end
       res.status(200).send(output);
     } catch (error) {
-      if (error instanceof Error) {
-        console.log("errors");
+      console.log(error);
 
-        res.status(400).send(error);
-      } else if (error instanceof Error) {
-        res.status(404).send(error.message);
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues);
+      } else if (error instanceof BaseError) {
+        res.status(error.statusCode).send(error.message);
       } else {
         res.status(500).send("Erro inesperado");
       }
@@ -33,44 +39,77 @@ export class PostController {
   // criar um post
   public createPost = async (req: Request, res: Response) => {
     try {
-
+      // receber dados do Front-end
       const input = CreatePostSchema.parse({
-        creatorId : req.body.creator_id,
-        content : req.body.content
-      })
+        token: req.headers.authorization,
+        creatorId: req.body.creator_id,
+        content: req.body.content,
+      });
 
-     
-      const output= await this.postBusiness.createPost(input)
-      res.status(201).send(output)
-
+      // enviar para Businnes para verificações
+      const output = await this.postBusiness.createPost(input);
+      // resposta para Front-end
+      res.status(201).send(output);
     } catch (error) {
-      if (error instanceof BaseError) {
-        console.log("errors");
+      console.log(error);
 
-        res.status(400).send(error);
-      } else if (error instanceof Error) {
-        res.status(404).send(error.message);
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues);
+      } else if (error instanceof BaseError) {
+        res.status(error.statusCode).send(error.message);
+      } else {
+        res.status(500).send("Erro inesperado");
+      }
+    }
+  };
+  // editar post
+  public updatePost = async (req: Request, res: Response) => {
+    try {
+      // receber dados do Front-end
+      const input = UpdaterPostSchema.parse({
+        token: req.headers.authorization,
+        idPostToEdit: req.params.id,
+        content: req.body.content,
+      });
+      // enviar para Businnes para verificações
+      const output = await this.postBusiness.updatePost(input);
+      
+      // resposta para Front-end
+      res.status(200).send(output);
+    } catch (error) {
+      console.log(error);
+
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues);
+      } else if (error instanceof BaseError) {
+        res.status(error.statusCode).send(error.message);
       } else {
         res.status(500).send("Erro inesperado");
       }
     }
   };
 
-  // delete Post por id 
+  // delete Post por id
   public deletePost = async (req: Request, res: Response) => {
     try {
+      // receber dados do Front-end
       const input = DeletePostSchema.parse({
-       idToDelete : req.params.id
-      })
+        token: req.headers.authorization,
+        idToDelete: req.params.id,
+      });
+      
+      // enviar para Businnes para verificações
       const output = await this.postBusiness.deletePost(input);
+      
+      // resposta para Front-end
       res.status(200).send(output);
     } catch (error) {
-      if (error instanceof Error) {
-        console.log("errors");
+      console.log(error);
 
-        res.status(400).send(error);
-      } else if (error instanceof Error) {
-        res.status(404).send(error.message);
+      if (error instanceof ZodError) {
+        res.status(400).send(error.issues);
+      } else if (error instanceof BaseError) {
+        res.status(error.statusCode).send(error.message);
       } else {
         res.status(500).send("Erro inesperado");
       }

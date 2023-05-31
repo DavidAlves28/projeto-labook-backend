@@ -2,7 +2,7 @@ export class LikesDislikes {
   constructor(userId: string, postId: string, like: number) {}
 }
 export interface LikesDislikesDB {
-  userId: string;
-  postId: string;
+  user_id: string;
+  post_id: string;
   like: number;
 }
