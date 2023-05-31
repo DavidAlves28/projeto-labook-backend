@@ -2,8 +2,8 @@ import z from "zod";
 
 // input de entrada para criação de Post
 export interface UpdatePostInputDTO {
-    token : string,
-  idToEdit: string;
+  token: string;
+  idPostToEdit: string;
   content: string;
 }
 
@@ -19,9 +19,10 @@ export interface UpdatePostOutputDTO {
   };
 }
 
-export const UpdaterPostSchema = z.object({
+export const UpdaterPostSchema = z
+  .object({
     token: z.string().min(1),
-    idToEdit: z.string(),
+    idPostToEdit: z.string(),
     content: z.string().min(4),
   })
   .transform((data) => data as UpdatePostInputDTO);

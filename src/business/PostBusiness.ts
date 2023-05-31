@@ -23,6 +23,7 @@ import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { NotFoundError } from "../errors/NotFoundError";
 import { ForbiddenError } from "../errors/ForbiddenError";
 import { PostModel } from "../models/Posts";
+import { USER_ROLES } from "../models/User";
 
 export class PostBusiness {
   // Injeção de dependência do banco de dados 'PostDataBase'
@@ -96,7 +97,8 @@ export class PostBusiness {
     await this.postDataBase.insertPost(newPostDB);
     // criar tabela de relação
     await this.likeDataBase.createLikePost(like);
-    console.log(like);
+
+    // Retorno para Fron-end
 
     const output: CreatePostOutputDTO = {
       message: "Post criado com sucesso!",
@@ -109,7 +111,7 @@ export class PostBusiness {
   public updatePost = async (
     input: UpdatePostInputDTO
   ): Promise<UpdatePostOutputDTO> => {
-    const { token, idToEdit, content } = input;
+    const { token, idPostToEdit, content } = input;
 
     // requer token do usuario
     const payload = await this.tokenManager.getPayload(token);
@@ -118,7 +120,7 @@ export class PostBusiness {
       throw new UnauthorizedError();
     }
     // Buscar post na data base
-    const postExist = await this.postDataBase.findPostById(idToEdit);
+    const postExist = await this.postDataBase.findPostById(idPostToEdit);
     if (!postExist) {
       throw new NotFoundError("'id' não encontrado.");
     }
@@ -141,12 +143,13 @@ export class PostBusiness {
     // editar conteúdo
     newPost.setContent(content);
     // atualizar data de atualização
-    newPost.setUpdatedAt(new Date().toISOString());
+    // formato = DD/MM/YYYY , horalocal
+    newPost.setUpdatedAt(new Date().toLocaleString());
     // modelando tipagem
     const updatedNewPost = newPost.toDBModel();
 
     // enviar dados para DB
-    await this.postDataBase.updatePost(idToEdit, updatedNewPost);
+    await this.postDataBase.updatePost(idPostToEdit, updatedNewPost);
     // saída para Front-end
     const output: UpdatePostOutputDTO = {
       message: "Post Atualizado com sucesso!",
@@ -154,16 +157,36 @@ export class PostBusiness {
     };
     return output;
   };
+
   //delete Post
   public deletePost = async (
     input: DeletePostInputDTO
   ): Promise<DeletePostOutputDTO> => {
-    const { idToDelete } = input;
+    const { idToDelete, token } = input;
+    // verificar se post existe
+    // requer token do usuario
+    const payload = await this.tokenManager.getPayload(token);
+
+    if (!payload) {
+      throw new UnauthorizedError();
+    }
+    // Buscar post na data base
     const postExist = await this.postDataBase.findPostById(idToDelete);
     if (!postExist) {
-      throw new BadRequestError("'id' não existe");
+      throw new NotFoundError("'id' não encontrado.");
     }
+
+    // O ADMIN também poderá deletar o Post
+    // verificar se quem criou o post é o mesmo do login atraves do id e creator_id
+    if (payload.role !== USER_ROLES.ADMIN) {
+      if (payload.id !== postExist.creator_id) {
+        throw new ForbiddenError("somente quem criou o Post ou administrador pode deleta-lo");
+      }
+    }
+
+    // Enviar para DB
     await this.postDataBase.deletePost(idToDelete);
+    // Retorno para Fron-end
     const output: DeletePostOutputDTO = {
       message: "Post deletado!",
     };
