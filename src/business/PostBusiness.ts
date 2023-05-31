@@ -62,15 +62,25 @@ export class PostBusiness {
   public createPost = async (
     input: CreatePostInputDTO
   ): Promise<CreatePostOutputDTO> => {
-    const { creatorId, content } = input;
-    const id = this.idGenerator.generate();
-    const postExist = await this.postDataBase.findPostById(id);
+    // receber dados do Front-end
+    const { token, creatorId, content } = input;
+    
+     // requer token do usuario
+     const payload = await this.tokenManager.getPayload(token);
 
+     if (!payload) {
+       throw new UnauthorizedError();
+     }
+
+    // gerar id pelo UUID
+    const id = this.idGenerator.generate();
+    // verificar se id existe  na DB.
+    const postExist = await this.postDataBase.findPostById(id);
     if (postExist) {
       throw new BadRequestError("'id' já existe");
     }
-    // const creatorExist = await this.postDataBase.findCreatorById(creatorId)
-
+    
+    // verificar creator_id   
     if (!creatorId) {
       throw new BadRequestError("'creator_id' não existe");
     }
@@ -78,11 +88,11 @@ export class PostBusiness {
     const newPost = new Posts(
       id,
       content,
-      new Date().toISOString(), // createdAt
-      new Date().toISOString(), // updatedAt
+      new Date().toLocaleString(), // createdAt
+      new Date().toLocaleString(), // updatedAt
       0, //likes
       0, //dislikes
-      creatorId
+      payload.id
     );
 
     // estância da relação user => post
