@@ -8,15 +8,29 @@ import { PostDB, Posts } from "../models/Posts";
 import { BadRequestError } from "../errors/BadRequestError";
 import { GetPostInputDTO, GetPostsOutputDTO } from "../dtos/posts/getPosts.dto";
 import {
-  DeletePostInputDTO, DeletePostOutputDTO,
- 
+  DeletePostInputDTO,
+  DeletePostOutputDTO,
 } from "../dtos/posts/deletePost.dto";
+import { LikesDislikesDataBase } from "../database/LikeDislikesDataBase";
+import { LikesDislikesDB } from "../models/LikesDislikes";
+import { LikesDislikesOutputDTO } from "../dtos/likesDislikes/likes-dislikes.dto";
+import {
+  UpdatePostInputDTO,
+  UpdatePostOutputDTO,
+} from "../dtos/posts/updatePost.dto";
+import { TokenManager } from "../services/TokenManager";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
+import { NotFoundError } from "../errors/NotFoundError";
+import { ForbiddenError } from "../errors/ForbiddenError";
+import { PostModel } from "../models/Posts";
 
 export class PostBusiness {
   // Injeção de dependência do banco de dados 'PostDataBase'
   constructor(
     private postDataBase: PostDataBase,
-    private idGenerator: IdGenerator
+    private idGenerator: IdGenerator,
+    private likeDataBase: LikesDislikesDataBase,
+    private tokenManager: TokenManager
   ) {}
 
   // retornar todos os posts
@@ -56,9 +70,10 @@ export class PostBusiness {
     }
     // const creatorExist = await this.postDataBase.findCreatorById(creatorId)
 
-    if(!creatorId){
-      throw new BadRequestError("'creator_id' não existe")
+    if (!creatorId) {
+      throw new BadRequestError("'creator_id' não existe");
     }
+    // estância do novo post
     const newPost = new Posts(
       id,
       content,
@@ -68,8 +83,21 @@ export class PostBusiness {
       0, //dislikes
       creatorId
     );
+
+    // estância da relação user => post
+    // adicionar propriedades para tabelas de relação
+    const like: LikesDislikesDB = {
+      user_id: newPost.getCreatorId(),
+      post_id: newPost.getId(),
+      like: newPost.getLikes(),
+    };
+    // criar post
     const newPostDB = newPost.toDBModel();
     await this.postDataBase.insertPost(newPostDB);
+    // criar tabela de relação
+    await this.likeDataBase.createLikePost(like);
+    console.log(like);
+
     const output: CreatePostOutputDTO = {
       message: "Post criado com sucesso!",
       post: newPost.toBusinessModel(),
@@ -78,9 +106,54 @@ export class PostBusiness {
   };
 
   // editar Post
-    // public updatePost =async (idToUpdate: string , input : ) => {
-      
-    // }
+  public updatePost = async (
+    input: UpdatePostInputDTO
+  ): Promise<UpdatePostOutputDTO> => {
+    const { token, idToEdit, content } = input;
+
+    // requer token do usuario
+    const payload = await this.tokenManager.getPayload(token);
+
+    if (!payload) {
+      throw new UnauthorizedError();
+    }
+    // Buscar post na data base
+    const postExist = await this.postDataBase.findPostById(idToEdit);
+    if (!postExist) {
+      throw new NotFoundError("'id' não encontrado.");
+    }
+    // verificar se quem criou o post é o mesmo do login atraves do id e creator_id
+    if (payload.id !== postExist.creator_id) {
+      throw new ForbiddenError("somente quem criou o Post pode editá-lo");
+    }
+
+    //estânciar novo post
+    const newPost = new Posts(
+      postExist.id,
+      postExist.content,
+      postExist.created_at,
+      postExist.updated_at,
+      postExist.likes,
+      postExist.dislikes,
+      payload.id
+    );
+
+    // editar conteúdo
+    newPost.setContent(content);
+    // atualizar data de atualização
+    newPost.setUpdatedAt(new Date().toISOString());
+    // modelando tipagem
+    const updatedNewPost = newPost.toDBModel();
+
+    // enviar dados para DB
+    await this.postDataBase.updatePost(idToEdit, updatedNewPost);
+    // saída para Front-end
+    const output: UpdatePostOutputDTO = {
+      message: "Post Atualizado com sucesso!",
+      post: newPost.toBusinessModel(),
+    };
+    return output;
+  };
   //delete Post
   public deletePost = async (
     input: DeletePostInputDTO
@@ -91,7 +164,7 @@ export class PostBusiness {
       throw new BadRequestError("'id' não existe");
     }
     await this.postDataBase.deletePost(idToDelete);
-    const output:DeletePostOutputDTO = {
+    const output: DeletePostOutputDTO = {
       message: "Post deletado!",
     };
     return output;

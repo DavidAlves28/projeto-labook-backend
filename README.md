@@ -26,23 +26,23 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
 - Documentação Postman de todos os endpoints (obrigatória para correção)
 
 - Endpoints
-    - [ ]  signup
-    - [ ]  login
-    - [x ]  get posts
-    - [ x]  create post
+    - [x]  signup
+    - [x]  login
+    - [x]  get posts
+    - [x]  create post
     - [ ]  edit post
-    - [x ]  delete post
+    - [x]  delete post
     - [ ]  like / dislike post
 
 - Autenticação e autorização
-    - [ ]  identificação UUID
+    - [x]  identificação UUID
     - [ ]  senhas hasheadas com Bcrypt
-    - [ ]  tokens JWT
+    - [x]  tokens JWT
  
  - Código
-    - [ x]  POO
-    - [ x]  Arquitetura em camadas
-    - [ ]  Roteadores no Express
+    - [x]  POO
+    - [x]  Arquitetura em camadas
+    - [x]  Roteadores no Express
 
 - README.md
 

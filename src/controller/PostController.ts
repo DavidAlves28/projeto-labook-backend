@@ -4,6 +4,7 @@ import { BaseError } from "../errors/BaseError";
 import { CreatePostSchema } from "../dtos/posts/createPost.dto";
 import { GetPostSchema } from "../dtos/posts/getPosts.dto";
 import { DeletePostSchema } from "../dtos/posts/deletePost.dto";
+import { UpdaterPostSchema } from "../dtos/posts/updatePost.dto";
 
 
 export class PostController {
@@ -55,6 +56,28 @@ export class PostController {
       }
     }
   };
+  // editar post 
+  public updatePost= async (req: Request, res: Response) => {
+    try {
+      const input = UpdaterPostSchema.parse({
+        token: req.headers.authorization,
+       idToEdit : req.params.id,
+       content: req.body.content
+      })
+      const output = await this.postBusiness.updatePost(input)
+      res.status(200).send(output);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log("errors");
+
+        res.status(400).send(error);
+      } else if (error instanceof Error) {
+        res.status(404).send(error.message);
+      } else {
+        res.status(500).send("Erro inesperado");
+      }
+    }
+  }
 
   // delete Post por id 
   public deletePost = async (req: Request, res: Response) => {
