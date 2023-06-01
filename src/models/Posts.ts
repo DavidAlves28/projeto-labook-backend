@@ -9,6 +9,19 @@ export interface PostDB {
 
 }
 
+export interface PostDBWithCreatorName {
+  id: string,
+  creator_id: string,
+  content: string,
+  created_at: string,
+  updated_at:string
+  likes: number,
+  dislikes: number,
+  creator_name:string
+ 
+}
+
+
 // é o modelo de Post que o front receberá (createdAt camelCase)
 export interface PostModel {
   id: string,
@@ -17,7 +30,10 @@ export interface PostModel {
   updatedAt:string
   likes: number,
   dislikes: number,
-  creatorId : string
+  creator: {
+  id: string,
+  name: string
+  }
 }
 
 
@@ -29,7 +45,8 @@ export class Posts {
     private updatedAt: string,
     private likes: number,
     private dislikes: number,
-    private creatorId: string
+    private creatorId: string,
+    private creatorName: string,
   ) {}
 
   public getId(): string {
@@ -80,7 +97,13 @@ export class Posts {
   public setCreatedAt(value: string): void {
     this.createdAt = value;
   }
+  public getCreatorName(): string {
+    return this.creatorName
+  }
 
+  public setCreatorName(value: string): void {
+    this.creatorName = value
+  }
   // para facilitar o retorno, geramos um PostDB
   public toDBModel(): PostDB {
     return {
@@ -101,7 +124,10 @@ export class Posts {
     updatedAt: this.updatedAt,
     likes: this.likes,
     dislikes: this.dislikes,
-    creatorId : this.creatorId
+    creator:{
+      id: this.creatorId,
+      name: this.creatorName
+    }
   }
   }
 }

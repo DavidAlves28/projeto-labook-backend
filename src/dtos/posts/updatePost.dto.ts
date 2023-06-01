@@ -12,7 +12,6 @@ export interface UpdatePostOutputDTO {
   message: string;
   post: {
     id: string;
-    creatorId: string;
     content: string;
     createdAt: string;
     likes: number;

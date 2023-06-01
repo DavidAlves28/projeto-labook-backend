@@ -12,15 +12,15 @@ export class PostController {
   constructor(private postBusiness: PostBusiness) {}
 
   // retorna todos os Posts
-  public findAllPosts = async (req: Request, res: Response) => {
+  public getAllPosts = async (req: Request, res: Response) => {
     try {
       // receber dados do Front-end
       const input = GetPostSchema.parse({
-        q: req.query.q,
+        token: req.headers.authorization
       });
 
       // enviar para Businnes para verificações
-      const output = await this.postBusiness.findAllPosts(input);
+      const output = await this.postBusiness.getAllPosts(input);
 
       // resposta para Front-end
       res.status(200).send(output);
@@ -42,7 +42,6 @@ export class PostController {
       // receber dados do Front-end
       const input = CreatePostSchema.parse({
         token: req.headers.authorization,
-        creatorId: req.body.creator_id,
         content: req.body.content,
       });
 
