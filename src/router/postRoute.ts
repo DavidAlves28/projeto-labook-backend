@@ -9,7 +9,7 @@ import { TokenManager } from "../services/TokenManager";
 export const postRoute = express.Router();
 
 const postController = new  PostController( new PostBusiness ( new PostDataBase, new IdGenerator, new LikesDislikesDataBase  , new TokenManager))
-postRoute.get('/',postController.findAllPosts)
+postRoute.get('/',postController.getAllPosts)
 postRoute.post('/',postController.createPost)
 postRoute.put('/:id', postController.updatePost)
 postRoute.delete('/:id', postController.deletePost)

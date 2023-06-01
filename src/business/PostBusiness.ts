@@ -35,12 +35,19 @@ export class PostBusiness {
   ) {}
 
   // retornar todos os posts
-  public findAllPosts = async (
+  public getAllPosts = async (
     input: GetPostInputDTO
   ): Promise<GetPostsOutputDTO> => {
-    const { q } = input;
+    // receber dados do Front-end
+    const { token } = input;
+    // requer token do usuario
+    const payload = await this.tokenManager.getPayload(token);
 
-    const postDB = await this.postDataBase.findAllPosts(q);
+    if (!payload) {
+      throw new UnauthorizedError();
+    }
+
+    const postDB = await this.postDataBase.getAllPosts();
 
     const findPosts = postDB.map((post) => {
       const posts = new Posts(
@@ -50,7 +57,8 @@ export class PostBusiness {
         post.updated_at,
         post.likes,
         post.dislikes,
-        post.creator_id
+        post.creator_id,
+        post.creator_name
       );
       return posts.toBusinessModel();
     });
@@ -63,14 +71,14 @@ export class PostBusiness {
     input: CreatePostInputDTO
   ): Promise<CreatePostOutputDTO> => {
     // receber dados do Front-end
-    const { token, creatorId, content } = input;
-    
-     // requer token do usuario
-     const payload = await this.tokenManager.getPayload(token);
+    const { token,content } = input;
 
-     if (!payload) {
-       throw new UnauthorizedError();
-     }
+    // requer token do usuario
+    const payload = await this.tokenManager.getPayload(token);
+
+    if (!payload) {
+      throw new UnauthorizedError();
+    }
 
     // gerar id pelo UUID
     const id = this.idGenerator.generate();
@@ -78,12 +86,8 @@ export class PostBusiness {
     const postExist = await this.postDataBase.findPostById(id);
     if (postExist) {
       throw new BadRequestError("'id' já existe");
-    }
-    
-    // verificar creator_id   
-    if (!creatorId) {
-      throw new BadRequestError("'creator_id' não existe");
-    }
+    }   
+   
     // estância do novo post
     const newPost = new Posts(
       id,
@@ -92,7 +96,8 @@ export class PostBusiness {
       new Date().toLocaleString(), // updatedAt
       0, //likes
       0, //dislikes
-      payload.id
+      payload.id,
+      payload.name
     );
 
     // estância da relação user => post
@@ -147,7 +152,8 @@ export class PostBusiness {
       postExist.updated_at,
       postExist.likes,
       postExist.dislikes,
-      payload.id
+      payload.id,
+      payload.name
     );
 
     // editar conteúdo
@@ -190,7 +196,9 @@ export class PostBusiness {
     // verificar se quem criou o post é o mesmo do login atraves do id e creator_id
     if (payload.role !== USER_ROLES.ADMIN) {
       if (payload.id !== postExist.creator_id) {
-        throw new ForbiddenError("somente quem criou o Post ou administrador pode deleta-lo");
+        throw new ForbiddenError(
+          "somente quem criou o Post ou administrador pode deleta-lo"
+        );
       }
     }
 

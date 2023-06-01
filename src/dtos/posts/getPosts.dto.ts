@@ -3,7 +3,7 @@ import { PostModel } from "../../models/Posts"
 
 
 export interface GetPostInputDTO {
-  q: string
+  token: string
 }
 
 // PostModel é a estrutura de Post que será devolvida para o Front
@@ -11,5 +11,5 @@ export interface GetPostInputDTO {
 export type GetPostsOutputDTO = PostModel[]
 
 export const GetPostSchema = z.object({
-  q: z.string().min(1).optional()
+ token: z.string().min(10)
 }).transform(data => data as GetPostInputDTO)
