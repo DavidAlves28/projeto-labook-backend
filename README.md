@@ -30,13 +30,13 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
     - [x]  login
     - [x]  get posts
     - [x]  create post
-    - [ ]  edit post
+    - [x]  edit post
     - [x]  delete post
-    - [ ]  like / dislike post
+    - [x]  like / dislike post
 
 - Autenticação e autorização
     - [x]  identificação UUID
-    - [ ]  senhas hasheadas com Bcrypt
+    - [x]  senhas hasheadas com Bcrypt
     - [x]  tokens JWT
  
  - Código

@@ -5,15 +5,17 @@ import { UserDataBase } from "../database/UserDataBase";
 import { IdGenerator } from "../services/IdGenerator";
 import { TokenManager } from "../services/TokenManager";
 import { HashManager } from "../services/HashManager";
-import { LikesDislikesDataBase } from "../database/LikeDislikesDataBase";
 
 export const userRoute = express.Router();
 const userController = new UserController(
-  new UserBusiness(new UserDataBase(), new IdGenerator(), new TokenManager(), new HashManager(), new LikesDislikesDataBase)
+  new UserBusiness(new 
+    UserDataBase(),
+    new IdGenerator(), 
+    new TokenManager(), 
+    new HashManager())
 );
-
+// endpoint somente ADMIN terá acesso!
 userRoute.get("/",userController.getUsers);
-// userRoute.get("/posts", userController.getUsersWithPost)
 userRoute.post("/signup", userController.signup);
 userRoute.post("/login", userController.login);
 

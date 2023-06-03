@@ -21,7 +21,7 @@ export class TokenManager {
     return token;
   };
 
-  // valida e converte o token string para um objeto de dados (payload)
+  // valida e converte o token string para um objeto com dados (payload)
   public getPayload = (token: string): TokenPayload | null => {
     try {
       const payload = jwt.verify(token, process.env.JWT_KEY as string);
@@ -29,7 +29,7 @@ export class TokenManager {
       return payload as TokenPayload;
 
       // se a validação falhar, um erro é disparado pelo jsonwebtoken
-      // nós pegamos o erro aqui e retornamos null para a Business saber que falhou
+      // o Erro vai ser tratado na camada Business 
     } catch (error) {
       return null;
     }
