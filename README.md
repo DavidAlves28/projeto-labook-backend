@@ -1,13 +1,14 @@
 # Projeto Labook
 O Labook é uma rede social com o objetivo de promover a conexão e interação entre pessoas. Quem se cadastrar no aplicativo poderá criar e curtir publicações.
 
-Agora que temos as bases de criação de APIs e banco de dados, o próximo nível é a implementação de segurança e códigos mais escaláveis. Veremos durante o prazo de entrega desse projeto inúmeros conceitos e formas de desenvolvimento seguindo padrões de design e arquitetura, e seu desafio será unir as funcionalidades com as boas práticas de código.
+Projeto criado utilizando Typescript e Programação orientada á objetos, dando mais segurança e padronização.A Arquitetura em camadas para facilitar  o desenvolvimento e visão do projeto.Gerenciador de senhas UUID e gerador de hashes (password) para tornar escalável e seguro . Todos os endpoints necessitam de autenticação  e assim autorizadas para utilizar cada endpoint. 
 
-# Conteúdos abordados
+
+# Tecnologias Utilizadas.
 - NodeJS
 - Typescript
 - Express
-- SQL e SQLite
+- SQLite
 - Knex
 - POO
 - Arquitetura em camadas
@@ -22,17 +23,19 @@ Agora que temos as bases de criação de APIs e banco de dados, o próximo níve
 
 https://dbdiagram.io/d/63d16443296d97641d7c1ae1
 
+## Documentação Postman 
+## https://documenter.getpostman.com/view/24823167/2s93sW8Fep
 # Lista de requisitos
-- Documentação Postman de todos os endpoints (obrigatória para correção)
 
 - Endpoints
     - [x]  signup
     - [x]  login
-    - [x]  get posts
-    - [x]  create post
-    - [x]  edit post
-    - [x]  delete post
+    - [x]  getAllPosts
+    - [x]  creatPost
+    - [x]  updatePost
+    - [x]  deletePost
     - [x]  like / dislike post
+    - [x]  getAllUsers -  'ADMIN'
 
 - Autenticação e autorização
     - [x]  identificação UUID
@@ -44,21 +47,18 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
     - [x]  Arquitetura em camadas
     - [x]  Roteadores no Express
 
-- README.md
+
 
 # Token payload e User roles
-O enum de roles e o payload do token JWT devem estar no seguinte formato:
+O enum de roles  por padrão a criação de usuário está como 'NORMAL'
 ```typescript
+
 export enum USER_ROLES {
     NORMAL = "NORMAL",
     ADMIN = "ADMIN"
 }
 
-export interface TokenPayload {
-    id: string,
-    name: string,
-    role: USER_ROLES
-}
+
 ```
 
 # Exemplos de requisição
@@ -209,14 +209,3 @@ Caso dê um dislike em um post que tenha dado like, o dislike sobrescreve o like
 // status 200 OK
 ```
 
-### Para entender a tabela likes_dislikes
-- no SQLite, lógicas booleanas devem ser controladas via 0 e 1 (INTEGER)
-- quando like valer 1 na tabela é porque a pessoa deu like no post
-    - na requisição like é true
-    
-- quando like valer 0 na tabela é porque a pessoa deu dislike no post
-    - na requisição like é false
-    
-- caso não exista um registro na tabela de relação, é porque a pessoa não deu like nem dislike
-- caso dê like em um post que já tenha dado like, o like é removido (deleta o item da tabela)
-- caso dê dislike em um post que já tenha dado dislike, o dislike é removido (deleta o item da tabela)
