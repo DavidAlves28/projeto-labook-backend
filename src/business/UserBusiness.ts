@@ -11,9 +11,7 @@ import { BadRequestError } from "../errors/BadRequestError";
 import { LoginInputDTO, LoginOutputDTO } from "../dtos/users/login.dto";
 import { NotFoundError } from "../errors/NotFoundError";
 import { HashManager } from "../services/HashManager";
-import { LikesDislikesDataBase } from "../database/LikeDislikesDataBase";
-import { LikesDislikes } from "../models/LikesDislikes";
-import { LikesDislikesInputDTO, LikesDislikesOutputDTO } from "../dtos/likesDislikes/likes-dislikes.dto";
+
 
 export class UserBusiness {
   constructor(
@@ -21,7 +19,6 @@ export class UserBusiness {
     private idgenerator: IdGenerator,
     private tokenManager: TokenManager,
     private hashManager: HashManager,
-    private likeDataBase: LikesDislikesDataBase
   ) {}
 
   // endpoint que retorna todos os users
@@ -30,6 +27,8 @@ export class UserBusiness {
     input: GetUsersInputDTO
   ): Promise<GetUsersOutputDTO> => {
     const { q, token } = input;
+    
+    // requer token do usuário logado
     const payload = await this.tokenManager.getPayload(token);
 
     if (payload === null) {
@@ -39,7 +38,7 @@ export class UserBusiness {
       throw new BadRequestError("Acesso restrito, somente Administratores.");
     }
     const usersDB = await this.userDatabase.findUsers(q);
-
+    // estânciar novo user
     const users = usersDB.map((userDB) => {
       const user = new User(
         userDB.id,
@@ -58,6 +57,7 @@ export class UserBusiness {
     return output;
   };
 
+  // criar User 
   public signup = async (input: SignupInputDTO): Promise<SignupOutputDTO> => {
     // dados recebidos do front-end para criação do user.
     const { name, email, password } = input;
@@ -82,7 +82,7 @@ export class UserBusiness {
       name,
       email,
       hashPassword,
-      USER_ROLES.ADMIN, // só é possível criar users com contas normais.
+      USER_ROLES.NORMAL, // só é possível criar users com contas normais.
       new Date().toISOString() // createdAt.
     );
 
@@ -101,6 +101,7 @@ export class UserBusiness {
     // criar token do user
     const token = this.tokenManager.createToken(tokenPayload);
     // saida para o front-end com menssagem de sucesso e o seu token.
+    // o toker deverá ser persistido em localStore ou cookies para seu uso no endpoint de posts.
     const output: SignupOutputDTO = {
       message: "Cadastro realizado com sucesso",
       token: token,
@@ -139,6 +140,7 @@ export class UserBusiness {
     );
 
     // criar tokenPayload do user depois de insirido do banco de dados.
+    // o toker deverá ser persistido em localStore ou cookies para seu uso no endpoint de posts.
     const tokenPayload: TokenPayload = {
       id: user.getId(),
       name: user.getName(),
@@ -157,42 +159,5 @@ export class UserBusiness {
     return output;
   };
 
-  // public getUsersWithPost = async (
-  //   input: GetUsersInputDTO
-  // ): Promise<LikesDislikesOutputDTO> => {
-  //   const { q, token } = input;
-  //   const payload = await this.tokenManager.getPayload(token);
 
-  //   if (payload === null) {
-  //     throw new NotFoundError("Token invalido");
-  //   }
-  //   if (payload.role !== USER_ROLES.ADMIN) {
-  //     throw new BadRequestError("Acesso restrito, somente Administratores.");
-  //   }
-  //   const usersDB = await this.userDatabase.findUsers(q);
-
-  //   const users = usersDB.map((userDB) => {
-  //     const user = new User(
-  //       userDB.id,
-  //       userDB.name,
-  //       userDB.email,
-  //       userDB.password,
-  //       userDB.role,
-  //       userDB.created_at
-  //     );
-
-  //     return user.toBusinessModel();
-  //   });
-
-  //   // // criar objeto.
-  //   // const tableRelation : LikesDislikesOutputDTO = await this.likeDataBase.findUserId(payload.id);
-  
-  //   // console.log(tableRelation);
-    
-  //   // se houver token, então retornar seu id do token.
-
-  //   const output: GetUsersOutputDTO = users;
-
-   
-  // };
 }

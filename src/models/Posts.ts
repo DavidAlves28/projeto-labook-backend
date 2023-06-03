@@ -1,41 +1,37 @@
 export interface PostDB {
-  id: string,
-  content: string,
-  created_at: string
-  updated_at : string,
-  likes: number,
-  dislikes: number,
-  creator_id : string
-
+  id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  likes: number;
+  dislikes: number;
+  creator_id: string;
 }
 
 export interface PostDBWithCreatorName {
-  id: string,
-  creator_id: string,
-  content: string,
-  created_at: string,
-  updated_at:string
-  likes: number,
-  dislikes: number,
-  creator_name:string
- 
+  id: string;
+  creator_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  likes: number;
+  dislikes: number;
+  creator_name: string;
 }
-
 
 // é o modelo de Post que o front receberá (createdAt camelCase)
 export interface PostModel {
-  id: string,
-  content: string,
-  createdAt: string,
-  updatedAt:string
-  likes: number,
-  dislikes: number,
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  likes: number;
+  dislikes: number;
   creator: {
-  id: string,
-  name: string
-  }
+    id: string;
+    name: string;
+  };
 }
-
 
 export class Posts {
   constructor(
@@ -46,7 +42,7 @@ export class Posts {
     private likes: number,
     private dislikes: number,
     private creatorId: string,
-    private creatorName: string,
+    private creatorName: string
   ) {}
 
   public getId(): string {
@@ -76,12 +72,32 @@ export class Posts {
   public setDislikes(value: number) {
     this.dislikes = value;
   }
+
+  // será utilizado no endpoint
+  // encrementar dislikes
+  public addDislike = (): void => {
+    this.dislikes++;
+  };
+  // decrementar dislikes
+  public removeDislike = (): void => {
+    this.dislikes--;
+  };
+
   public getLikes(): number {
     return this.likes;
   }
   public setLikes(value: number) {
     this.likes = value;
   }
+  // será utilizado no endpoint
+  // encrementar dislikes
+  public addLike = (): void => {
+    this.likes++;
+  };
+  // decrementar dislikes
+  public removeLike = (): void => {
+    this.likes--;
+  };
 
   public getContent(): string {
     return this.content;
@@ -98,36 +114,36 @@ export class Posts {
     this.createdAt = value;
   }
   public getCreatorName(): string {
-    return this.creatorName
+    return this.creatorName;
   }
 
   public setCreatorName(value: string): void {
-    this.creatorName = value
+    this.creatorName = value;
   }
   // para facilitar o retorno, geramos um PostDB
   public toDBModel(): PostDB {
     return {
-     id :this.id,
-     content  : this.content,
-     created_at: this.createdAt,
-     updated_at : this.updatedAt,
-     likes: this.likes,
-     dislikes: this.dislikes,
-     creator_id: this.creatorId,
-    }
+      id: this.id,
+      content: this.content,
+      created_at: this.createdAt,
+      updated_at: this.updatedAt,
+      likes: this.likes,
+      dislikes: this.dislikes,
+      creator_id: this.creatorId,
+    };
   }
-  public toBusinessModel():PostModel{
-  return{
-    id: this.id,
-    content: this.content,
-    createdAt: this.createdAt,
-    updatedAt: this.updatedAt,
-    likes: this.likes,
-    dislikes: this.dislikes,
-    creator:{
-      id: this.creatorId,
-      name: this.creatorName
-    }
-  }
+  public toBusinessModel(): PostModel {
+    return {
+      id: this.id,
+      content: this.content,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      likes: this.likes,
+      dislikes: this.dislikes,
+      creator: {
+        id: this.creatorId,
+        name: this.creatorName,
+      },
+    };
   }
 }

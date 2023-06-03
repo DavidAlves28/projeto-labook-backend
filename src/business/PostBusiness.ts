@@ -4,16 +4,19 @@ import {
   CreatePostInputDTO,
   CreatePostOutputDTO,
 } from "../dtos/posts/createPost.dto";
-import { PostDB, Posts } from "../models/Posts";
+import { Posts } from "../models/Posts";
 import { BadRequestError } from "../errors/BadRequestError";
 import { GetPostInputDTO, GetPostsOutputDTO } from "../dtos/posts/getPosts.dto";
 import {
   DeletePostInputDTO,
   DeletePostOutputDTO,
 } from "../dtos/posts/deletePost.dto";
-import { LikesDislikesDataBase } from "../database/LikeDislikesDataBase";
+
 import { LikesDislikesDB } from "../models/LikesDislikes";
-import { LikesDislikesOutputDTO } from "../dtos/likesDislikes/likes-dislikes.dto";
+import {
+  LikesDislikesInputDTO,
+  LikesDislikesOutputDTO,
+} from "../dtos/likesDislikes/likes-dislikes.dto";
 import {
   UpdatePostInputDTO,
   UpdatePostOutputDTO,
@@ -22,16 +25,15 @@ import { TokenManager } from "../services/TokenManager";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { NotFoundError } from "../errors/NotFoundError";
 import { ForbiddenError } from "../errors/ForbiddenError";
-import { PostModel } from "../models/Posts";
 import { USER_ROLES } from "../models/User";
+import { POST_LIKE } from "../models/LikesDislikes";
 
 export class PostBusiness {
-  // Injeção de dependência do banco de dados 'PostDataBase'
+  // Injeção de dependências
   constructor(
-    private postDataBase: PostDataBase,
-    private idGenerator: IdGenerator,
-    private likeDataBase: LikesDislikesDataBase,
-    private tokenManager: TokenManager
+    private postDataBase: PostDataBase, // Data Base
+    private idGenerator: IdGenerator, // UUID
+    private tokenManager: TokenManager // Gerenciador de JWT Token
   ) {}
 
   // retornar todos os posts
@@ -40,15 +42,16 @@ export class PostBusiness {
   ): Promise<GetPostsOutputDTO> => {
     // receber dados do Front-end
     const { token } = input;
-    // requer token do usuario
+    // requer token do usuário logado
+
     const payload = await this.tokenManager.getPayload(token);
 
     if (!payload) {
       throw new UnauthorizedError();
     }
-
+    // verificar se id existe  na DB.
     const postDB = await this.postDataBase.getAllPosts();
-
+    // estância para novo post
     const findPosts = postDB.map((post) => {
       const posts = new Posts(
         post.id,
@@ -62,33 +65,33 @@ export class PostBusiness {
       );
       return posts.toBusinessModel();
     });
-
+    // retorno para Front-end
     const output: GetPostsOutputDTO = findPosts;
     return output;
   };
+
   // Criar Post
   public createPost = async (
     input: CreatePostInputDTO
   ): Promise<CreatePostOutputDTO> => {
     // receber dados do Front-end
-    const { token,content } = input;
+    const { token, content } = input;
 
-    // requer token do usuario
+    // requer token do usuário logado
     const payload = await this.tokenManager.getPayload(token);
 
     if (!payload) {
       throw new UnauthorizedError();
     }
-
     // gerar id pelo UUID
     const id = this.idGenerator.generate();
     // verificar se id existe  na DB.
     const postExist = await this.postDataBase.findPostById(id);
     if (postExist) {
       throw new BadRequestError("'id' já existe");
-    }   
-   
-    // estância do novo post
+    }
+
+    // estância para novo post
     const newPost = new Posts(
       id,
       content,
@@ -100,18 +103,9 @@ export class PostBusiness {
       payload.name
     );
 
-    // estância da relação user => post
-    // adicionar propriedades para tabelas de relação
-    const like: LikesDislikesDB = {
-      user_id: newPost.getCreatorId(),
-      post_id: newPost.getId(),
-      like: newPost.getLikes(),
-    };
     // criar post
     const newPostDB = newPost.toDBModel();
     await this.postDataBase.insertPost(newPostDB);
-    // criar tabela de relação
-    await this.likeDataBase.createLikePost(like);
 
     // Retorno para Fron-end
 
@@ -208,6 +202,96 @@ export class PostBusiness {
     const output: DeletePostOutputDTO = {
       message: "Post deletado!",
     };
+    return output;
+  };
+
+  
+  // endpoint para like e/ou dislike
+  public likeDislikePost = async (
+    input: LikesDislikesInputDTO
+  ): Promise<LikesDislikesOutputDTO> => {
+    const { token, like, postId } = input;
+    
+    // requer token do usuário logado
+    const payload = await this.tokenManager.getPayload(token);
+
+    if (!payload) {
+      throw new UnauthorizedError();
+    }
+    // Buscar post na data base
+    const postExist = await this.postDataBase.findPostWithPostId(postId);
+
+    if (!postExist) {
+      throw new NotFoundError("'id' não encontrado.");
+    }
+    //estânciar novo post
+    const newPost = new Posts(
+      postExist.id,
+      postExist.content,
+      postExist.created_at,
+      postExist.updated_at,
+      postExist.likes,
+      postExist.dislikes,
+      payload.id,
+      payload.name
+    );
+
+    // verificar se like é True ou False
+    const likeDB = like ? 1 : 0;
+
+    const likeDislikeDB: LikesDislikesDB = {
+      user_id: payload.id,
+      post_id: postId,
+      like: likeDB,
+    };
+
+    // verificar se tabela de relaciomento
+    const LikeDislikesExists = await this.postDataBase.findLikeDislike(
+      likeDislikeDB
+    );
+  
+    // se like estiver checked
+    if (LikeDislikesExists === POST_LIKE.ALREADY_LIKED) {
+      // caso o like for 1 e ser clicado , então remover  o like.
+      // Caso dê um like em um post que já tenha dado like, o like é desfeito.
+      if (like) {
+        await this.postDataBase.deleteLikeDislike(likeDislikeDB);
+        newPost.removeLike();
+      } else {
+        // decrementar o like se houver do DB e encrementar um dislike
+        await this.postDataBase.updateLikeDislike(likeDislikeDB); // edita o like no DB.
+        newPost.removeLike(); //decrementa o like.
+        newPost.addDislike(); // encrementa o dislike.
+      }
+      // Se dislike for checked
+    } else if (LikeDislikesExists === POST_LIKE.ALREADY_DISLIKED) {
+      // Caso dê um like em um post que tenha dado dislike, o like sobrescreve o dislike.
+      if (like === false) {
+        //  remove like do DB
+        await this.postDataBase.deleteLikeDislike(likeDislikeDB);
+        newPost.removeDislike(); //decrementa o like.
+      }
+      // Caso dê um dislike em um post que tenha dado like, o dislike sobrescreve o like
+      else {
+        await this.postDataBase.updateLikeDislike(likeDislikeDB); // edita o like no DB.
+        newPost.removeDislike(); // decrementa o like.
+        newPost.addLike(); // encrementa o like.
+      }
+    }
+    // Caso não houver nunhum like ou dislike
+    else {
+      await this.postDataBase.insertLikeDislike(likeDislikeDB); // inserir no DB
+      // se like for 1 encrementar like
+      // se like for 0 encrementar dislike
+      like ? newPost.addLike() : newPost.addDislike();
+    }
+
+    // tipagem para enviar ao DB
+    const updatedNewPost = newPost.toDBModel();
+    // update Post
+    await this.postDataBase.updatePost(postId, updatedNewPost);
+    // retorno para o Front
+    const output: LikesDislikesOutputDTO = undefined;
     return output;
   };
 }

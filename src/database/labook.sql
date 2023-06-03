@@ -22,7 +22,7 @@ VALUES (
     );
 
 SELECT * FROM users;
-DROP TABLE users;
+
 CREATE TABLE
     posts (
         id TEXT PRIMARY KEY UNIQUE NOT NULL,
@@ -37,7 +37,6 @@ CREATE TABLE
 
 SELECT * FROM posts;
 
-DROP TABLE posts;
 
 INSERT INTO
     posts (id, creator_id, content)
