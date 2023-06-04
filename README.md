@@ -52,7 +52,6 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
 ## instalar dependências
 ```
 npm i 
-npm run dev 
 ```
 ## configurar variáveis de ambiente
  - criar arquivo .env na pasta raiz do projeto
