@@ -48,6 +48,34 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
     - [x]  Roteadores no Express
 
 
+# Instalação 
+## instalar dependências
+```
+npm i 
+npm run dev 
+```
+## configurar variáveis de ambiente
+ - criar arquivo .env na pasta raiz do projeto
+```typescript
+
+{ 
+PORT=3003 // porta servidor padrão 3003
+//  caminho para database
+DB_FILE_PATH= caminho do arquivo banco de dados
+//  senha para payload no  tokenManager
+JWT_KEY= seuchave
+//   tempo de expiração de token 
+JWT_EXPIRES_IN=30d
+
+//  número de rodadas. 'cost' . padrão 12
+BCRYPT_COST=12
+
+}
+```
+## Iniciar servidor
+```
+npm run dev 
+```
 
 # Token payload e User roles
 O enum de roles  por padrão a criação de usuário está como 'NORMAL'
