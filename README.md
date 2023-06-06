@@ -53,11 +53,7 @@ https://dbdiagram.io/d/63d16443296d97641d7c1ae1
 ```
 npm i 
 ```
-##  criar arquivo .db na pasta DataBase
-```
-exploo : arquivo.db
-```
-## conectar servidor com banco de dados
+
 
 
 ## configurar variáveis de ambiente
